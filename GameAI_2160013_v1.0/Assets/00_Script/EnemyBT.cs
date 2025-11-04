@@ -47,18 +47,151 @@
 
 
 using UnityEngine;
+using UnityEditor.Animations;
+using System.Collections.Generic; // List 사용을 위한 네임스페이스
+
+// 지금까지 만든 Node, Leaf, Sequence, Selector 클래스를 조립하여 실제 적 AI의 행동 트리를 구성하고 실행하는 메인 스크립트
+// 적의 상태(공격, 추적, 순찰, 대기)와 그에 따른 행동을 정의하는 클래스 스크립트
 
 public class EnemyBT : MonoBehaviour
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
+    /* 필드(멤버 변수) 정의하기
+    - root : 행동 트리의 가장 최상위 노드. 모든 로직은 이 root에서 시작됨
+    - animatorMonsterState : 적 캐릭터의 애니메이션을 제어하는 컴포넌트
+    - characterTarget : 추적하고 공격할 대상(플레이어)의 위치정보
+    - fMonsterSpeed, fCahseRange, fAttackRange : 각각 이동속도 추적시작 거리 공격 가능 거리 변수
+    */
+
+    public Transform[] waypoints;
+    private int nWaypointIndex = 0;
+
+    private BT_Node root = null;              // BT 루트 노드 : 모든 Evaluate() 호출이 시작되는 진입점
+    Animator animatorMonsterState = null;    // 애니메이터 상태 변수
+    public Transform characterTarget = null; // 추적 대상
+
+    public float fChaseRange = 5.0f;         // 추적할 수 있는 거리 변수, 초기값은 5m
+    public float fAttackRange = 1.5f;        // 공격할 수 있는 거리 변수, 추적변수와 초기값은 달라야 함. 초기값 1.5m
+    public float fMonsterSpeed = 2.0f;       // 몬스터가 NPC(캐릭터) 추적할 스피드 값 저장 변수
+    public float fPatrolRange = 5.0f;
+
+    /* 루트 = Selector
+            - 첫 번째 자식 노드 : 시퀀스(Sequence)
+                - 조건 노드 : 플레이어가 공격 범위 내에 있는가?
+                - 행동 노드 : 공격하기
+            - 두 번째 자식 노드 : 시퀀스(Sequence)
+                - 조건 노드 : 플레이어가 추적 범위 내에 있는가?
+                - 행동 노드 : 추적하기
+            - 세 번째 자식 노드 : 행동 노드
+                - 행동 노드 : 대기하기
+            우선순위는 리스트 순서로 구현
+    */
+
+
     void Start()
     {
-        
+        animatorMonsterState = GetComponent<Animator>();
+
+        // Root : Selector
+        root = new BT_Selector
+        (new List<BT_Node>
+        {
+            new BT_Sequence(new List<BT_Node>          // 공격 시퀀스  : [공격 범위?] -> [공격]
+            {
+               new BT_Leaf(CheckPlayerAttackRange), // 공격 조건 Leaf
+               new BT_Leaf(AttackPlayer)              // 행동 Leaf
+            }),
+            new BT_Sequence(new List<BT_Node>
+            {
+               new BT_Leaf(CheckPlayerChaseRange), // 추적 조건 Leaf
+               new BT_Leaf(ChasePlayer)               // 행동 Leaf
+            }),
+/*
+            new BT_Sequence(new List<BT_Node>
+            {
+               new BT_Leaf(CheckPlayerPatrolRange), // 순찰 조건 Leaf
+               new BT_Leaf(PatrolPlayer)               // 행동 Leaf
+            }),
+            */
+            new BT_Leaf(IdlePlayer)                   // 아무 조건도 충족하지 못하면 Idle
+        });
+
     }
 
-    // Update is called once per frame
+    // 입력받은 range 값과 플레이어와의 실제 거리를 비교하여 플레이어가 공격 범위 안에 있으면 Success, 밖에 있으면 Failure를 반환하는 메소드
+    BT_NodeStatus CheckPlayerAttackRange() // 플레이어가 공격 범위 내에 있는가?
+    {
+        float fMonsterCharacterDist = Vector3.Distance(transform.position, characterTarget.position);
+
+        return (fMonsterCharacterDist <= fAttackRange) ? BT_NodeStatus.Success : BT_NodeStatus.Failure;
+    }
+
+    BT_NodeStatus CheckPlayerChaseRange() // 플레이어가 추적 범위 내에 있는가?
+    {
+        float fMonsterCharacterDist = Vector3.Distance(transform.position, characterTarget.position);
+
+        return (fMonsterCharacterDist <= fChaseRange) ? BT_NodeStatus.Success : BT_NodeStatus.Failure;
+    }
+/*
+    BT_NodeStatus CheckPlayerPatrolRange() // 플레이어가 순찰 범위 내에 있는가?
+    {
+        float fMonsterCharacterDist = Vector3.Distance(transform.position, characterTarget.position);
+
+        return (fMonsterCharacterDist > fPatrolRange) ? BT_NodeStatus.Success : BT_NodeStatus.Failure;
+    }
+*/
+    BT_NodeStatus IdlePlayer() // 대기하기
+    {
+        f_Rotate();
+        MonsterAnimatorStateChange("IDLE");
+        return BT_NodeStatus.Success;
+    }
+
+    BT_NodeStatus AttackPlayer() // 공격하기
+    {
+        f_Rotate();
+        MonsterAnimatorStateChange("ATTACK");
+        return BT_NodeStatus.Success;
+    }
+
+    BT_NodeStatus ChasePlayer() // 추적하기
+    {
+        transform.position = Vector3.MoveTowards(transform.position, characterTarget.position, Time.deltaTime * fMonsterSpeed);
+        f_Rotate();
+        MonsterAnimatorStateChange("CHASE");
+        return BT_NodeStatus.Running;
+    }
+    /*
+    BT_NodeStatus PatrolPlayer() // 순찰하기
+    {
+        MonsterPatrolState();       // 실제 순찰 동작 처리
+        return BT_NodeStatus.Running;
+    }
+    */
+    private void MonsterAnimatorStateChange(string strState)
+    {
+        // 애니메이터상태 false 로 초기화
+        animatorMonsterState.SetBool("IDLE", false);
+        animatorMonsterState.SetBool("CHASE", false);
+        animatorMonsterState.SetBool("ATTACK", false);
+        animatorMonsterState.SetBool("PATROL", false);
+
+        // 매개변수로 전달 받은 애니메이터 상태만 true 로 변경
+        animatorMonsterState.SetBool(strState, true);
+    }
+
+    private void f_Rotate()
+    {
+        Vector3 vector3Direction = (characterTarget.position - transform.position).normalized;
+        vector3Direction.y = 0.0f;
+        transform.forward = vector3Direction;
+    }
+
+    // root.Evaluate()를 매 프레임 호출해 트리 갱신
+    // Start()에서 설계한 행동 트리 전체가 최상위 노드부터 시작하여 매 프레임마다 자신의 상태를 평가하고 적절한 행동을 수행
     void Update()
     {
-        
+        // 루트의 Evaluate() 메서드를 호출하여 하위 로직을 일괄 수행
+        // Sequence, Selector 노드가 AND/OR, Leaf 노드가 실제 동작을 수행하도록 Update
+        root.Evaluate();
     }
 }
