@@ -56,13 +56,13 @@ public class EnemyFSM : MonoBehaviour
     Animator animatorMonsterState;                 // 상태별 애니메이터
 
     // 몬스터가 NPC(캐릭터) 추적할 스피드 값 저장 변수
-    public float fMonsterSpeed = 2.0f;       // 몬스터가 NPC(캐릭터) 추적할 스피드 값 저장 변수
 
 
     public Transform characterTarget = null; // 캐릭터 목표대상 오브젝트 변수
     public float fChaseRange = 5.0f;         // 추적할 수 있는 거리 변수, 초기값은 5m
     public float fAttackRange = 1.5f;        // 공격할 수 있는 거리 변수, 추적변수와 초기값은 달라야 함. 초기값 1.5m
 
+    public float fMonsterSpeed = 2.0f;       // 몬스터가 NPC(캐릭터) 추적할 스피드 값 저장 변수
 
     void Start()
     {

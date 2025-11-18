@@ -1,4 +1,4 @@
-/*
+ /*
 1. Behavior Tree(행동트리) 개념
 - 게임 AI가 어떤 행동을 어떤 순서로 수행할지를 트리 구조로 표현한 시스템
 - Behavior Tree는 게임 AI에서 널리 사용되는 계층적 의사 결정 구조
@@ -48,7 +48,9 @@
 
 using UnityEngine;
 using UnityEditor.Animations;
-using System.Collections.Generic; // List 사용을 위한 네임스페이스
+using System.Collections.Generic;
+using System.Collections; // List 사용을 위한 네임스페이스
+
 
 // 지금까지 만든 Node, Leaf, Sequence, Selector 클래스를 조립하여 실제 적 AI의 행동 트리를 구성하고 실행하는 메인 스크립트
 // 적의 상태(공격, 추적, 순찰, 대기)와 그에 따른 행동을 정의하는 클래스 스크립트
@@ -61,6 +63,8 @@ public class EnemyBT : MonoBehaviour
     - characterTarget : 추적하고 공격할 대상(플레이어)의 위치정보
     - fMonsterSpeed, fCahseRange, fAttackRange : 각각 이동속도 추적시작 거리 공격 가능 거리 변수
     */
+
+    
 
     public Transform[] waypoints;
     private int nWaypointIndex = 0;
@@ -105,13 +109,13 @@ public class EnemyBT : MonoBehaviour
                new BT_Leaf(CheckPlayerChaseRange), // 추적 조건 Leaf
                new BT_Leaf(ChasePlayer)               // 행동 Leaf
             }),
-/*
+
             new BT_Sequence(new List<BT_Node>
             {
                new BT_Leaf(CheckPlayerPatrolRange), // 순찰 조건 Leaf
                new BT_Leaf(PatrolPlayer)               // 행동 Leaf
             }),
-            */
+            
             new BT_Leaf(IdlePlayer)                   // 아무 조건도 충족하지 못하면 Idle
         });
 
@@ -131,14 +135,14 @@ public class EnemyBT : MonoBehaviour
 
         return (fMonsterCharacterDist <= fChaseRange) ? BT_NodeStatus.Success : BT_NodeStatus.Failure;
     }
-/*
+
     BT_NodeStatus CheckPlayerPatrolRange() // 플레이어가 순찰 범위 내에 있는가?
     {
         float fMonsterCharacterDist = Vector3.Distance(transform.position, characterTarget.position);
 
         return (fMonsterCharacterDist > fPatrolRange) ? BT_NodeStatus.Success : BT_NodeStatus.Failure;
     }
-*/
+
     BT_NodeStatus IdlePlayer() // 대기하기
     {
         f_Rotate();
@@ -160,13 +164,16 @@ public class EnemyBT : MonoBehaviour
         MonsterAnimatorStateChange("CHASE");
         return BT_NodeStatus.Running;
     }
-    /*
+
     BT_NodeStatus PatrolPlayer() // 순찰하기
     {
-        MonsterPatrolState();       // 실제 순찰 동작 처리
+        MonsterPatrol();       // 실제 순찰 동작 처리
+        MonsterAnimatorStateChange("PATROL");
         return BT_NodeStatus.Running;
     }
-    */
+    
+
+    
     private void MonsterAnimatorStateChange(string strState)
     {
         // 애니메이터상태 false 로 초기화
@@ -185,6 +192,41 @@ public class EnemyBT : MonoBehaviour
         vector3Direction.y = 0.0f;
         transform.forward = vector3Direction;
     }
+
+    private void MonsterPatrol()
+{
+    // 안전 체크: waypoints 세팅 확인
+    if (waypoints == null || waypoints.Length == 0) return;
+
+    Transform waypoint = waypoints[nWaypointIndex]; // 현재 웨이포인트 설정
+
+    
+
+    // 단순 이동 함수 (아래 MonsterMoveToWaypoint가 있으면 대체 가능)
+    float step = fMonsterSpeed * Time.deltaTime;
+        transform.position = Vector3.MoveTowards(transform.position, waypoint.position, step);
+
+
+    // 도착 판정
+    if (Vector3.Distance(transform.position, waypoint.position) < 1.0f)
+    {
+            nWaypointIndex = (nWaypointIndex + 1) % waypoints.Length;
+        
+
+        //idle state전환은 이곳에서 처리해도 됨
+
+
+        
+    }
+
+    // 회전(플레이어 추적용 f_Rotate가 있긴 하지만, 순찰 시에는 목표 방향으로 향하게)
+    Vector3 dir = (waypoint.position - transform.position);
+    dir.y = 0f;
+    if (dir.sqrMagnitude > 0.001f)
+        transform.forward = dir.normalized;
+}
+
+
 
     // root.Evaluate()를 매 프레임 호출해 트리 갱신
     // Start()에서 설계한 행동 트리 전체가 최상위 노드부터 시작하여 매 프레임마다 자신의 상태를 평가하고 적절한 행동을 수행

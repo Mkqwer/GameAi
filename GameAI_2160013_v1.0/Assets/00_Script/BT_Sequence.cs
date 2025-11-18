@@ -39,5 +39,5 @@ public class BT_Sequence : BT_Node
         
         return BT_NodeStatus.Success; // 위의 반복에서 실패/진행중을 만나지 못했다면, 모든 자식이 성공
     }
-    }
+ }
     
