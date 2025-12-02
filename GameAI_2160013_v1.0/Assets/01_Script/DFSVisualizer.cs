@@ -1,7 +1,7 @@
 /*
     DFSPathFinder가 찾은 경로 정보를 시각적으로 보여주는 기능
-    스페이스 키를 누르면 경로 타일이 초록색으로 순서대로 칠해지는 효과 발생
-    스페이스 키 입력 시, DFS로 찾은 경로를 하나씩 초록색으로 칠해가며 보여주는 스크립트
+    d 키를 누르면 경로 타일이 초록색으로 순서대로 칠해지는 효과 발생
+    d 키 입력 시, DFS로 찾은 경로를 하나씩 초록색으로 칠해가며 보여주는 스크립트
 */
 
 
@@ -25,7 +25,7 @@ public class DFSVisualizer : MonoBehaviour
 
     void Update()
     {
-        if (Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame)
+        if (Keyboard.current != null && Keyboard.current.dKey.wasPressedThisFrame)
         {
             StartCoroutine(ShowPathRoutline());
         }

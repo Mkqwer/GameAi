@@ -16,7 +16,7 @@ public class DFSPathFinder : MonoBehaviour
     // - Inspector 창에서 직접 수정 가능
     // - (0,0) 좌표가 기본 시작점, (4,4) 좌표가 기본 도착점
     [SerializeField] private Vector2Int vStartLocation = new Vector2Int(0, 0);
-    [SerializeField] private Vector2Int vEndLocation = new Vector2Int(20, 20);
+    [SerializeField] private Vector2Int vEndLocation = new Vector2Int(19, 19);
 
     // GridManager를 통해 그리드 내부 판별, 이동 가능 여부 확인을 진행한다
     void Awake()
@@ -87,8 +87,8 @@ public class DFSPathFinder : MonoBehaviour
 */
         Vector2Int[] vDirections = new Vector2Int[]
         {
-            Vector2Int.up,   //상
             Vector2Int.down, //하
+            Vector2Int.up,   //상
             Vector2Int.left, //좌
             Vector2Int.right //우
         };
