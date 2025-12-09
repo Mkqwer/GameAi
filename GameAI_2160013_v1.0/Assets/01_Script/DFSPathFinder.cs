@@ -6,11 +6,15 @@
 
 using UnityEngine;
 using System.Collections.Generic;
+using TMPro;
 
 public class DFSPathFinder : MonoBehaviour
 {
     //GridManager를 통해 그리드 경계/통로 여부/타일 정보를 조회하기 위함
     GridManager gridManager = null; 
+
+        [SerializeField] private TMP_Text DFS_SearchCount_Text = null;
+        private int nDFSSearchCount = 0;
 
     //DFS 탐색을 위한 시작/도착 지점 설정
     // - Inspector 창에서 직접 수정 가능
@@ -54,7 +58,9 @@ public class DFSPathFinder : MonoBehaviour
     HashSet은 순서가 없고 중복을 허용하지 않는 데이터 집합이므로 방문한 위치를 빠르게 확인할 수 있다
 */
         HashSet<Vector2Int> vVisitedLocation = new HashSet<Vector2Int>();
+        nDFSSearchCount = 0;
         return f_DFS(vStartLocation, vEndLocation, vVisitedLocation);
+        
     }
 
 
@@ -69,15 +75,27 @@ public class DFSPathFinder : MonoBehaviour
     // DFS(깊이 우선 탐색) 알고리즘을 사용해 current에서 end까지의 경로를 찾는 재귀 메소드
     private List<Vector2Int> f_DFS(Vector2Int current, Vector2Int end, HashSet<Vector2Int> visited)
     {
+        
+        nDFSSearchCount++;
+
+
         if (!f_IsValid(current) || visited.Contains(current)) //유효 좌표 검사 및 방문 여부 확인
         {
+
             return null; //유효하지 않으면 null 반환
         }
+
+        
+            if (DFS_SearchCount_Text != null)
+            {
+                DFS_SearchCount_Text.text = "DFS : " + nDFSSearchCount.ToString();
+            }
 
         visited.Add(current); //현재 좌표를 방문 목록에 등록해 중복 방문을 방지한다.
 
         if (current == end) //도착점에 도달했는지 확인
         {
+            
             return new List<Vector2Int> { current }; //도착점이면 현재 좌표를 담은 리스트 반환
         }
 

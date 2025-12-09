@@ -15,11 +15,16 @@
 // BFS에서는 큐(Queue)와 방문 집합(HashSet), 부모 추적(Dictionary)를 사용할 예정이라 필요합니다.
 using System.Collections.Generic;
 using UnityEngine;
-
+using TMPro;
+using UnityEngine.InputSystem;
 
 // BFS(Breadth-First Search, 너비 우선 탐색) 알고리즘으로 시작 지점 (Start)에서 도착 지점 (End)까지의 경로를 찾는 클래스
 public class BFSPathFinder : MonoBehaviour
 {
+
+    [SerializeField] private TMP_Text BFS_SearchCount_Text = null;
+    private int nBFSSearchCount = 0; // BFS 탐색 중 꺼낸(Dequeue)된 노드 수
+
     // 필드(멤버 변수) & Awake : 환경 준비
     // 이 필드는 현재 씬에 있는 GridManager 컴포넌트를 참조하기 위한 변수
     // GridManager는 " 이 좌표가 미로 안인지?", " 여기가 길인지 벽인지?" 같은 정보를 제공해줍니다.
@@ -68,7 +73,7 @@ public class BFSPathFinder : MonoBehaviour
         // - visited.Add(vStartLocation);
         //   → 시작 좌표는 이미 방문했다고 표시.
         Queue<Vector2Int> queue = new Queue<Vector2Int>();
-
+        nBFSSearchCount = 0;
         // 초기 설정: 시작 지점을 큐에 넣고 방문 처리
         queue.Enqueue(vStartLocation);
         visited.Add(vStartLocation);
@@ -87,19 +92,30 @@ public class BFSPathFinder : MonoBehaviour
         //BFS 메인 루프: 빈 큐가 나올때까지 반복
         while (queue.Count > 0)
         {
+            
+            nBFSSearchCount++;
+
             // ① current 꺼내기 : 현재 노드 큐에서 꺼낸 가장 오래된 노드
             // - Vector2Int current = queue.Dequeue();
             // - 큐에서 가장 먼저 들어온 좌표를 꺼낸다.
             // - BFS는 "가까운 거리 순서대로" 큐에 쌓이기 때문에, 항상 거리 1 → 2 → 3 ... 순서대로 탐색해 나간다.
             Vector2Int current = queue.Dequeue();
+            
 
             // ② 도착 지점에 도달했는지 확인
             // - 종료 조건 : 도착 지점에 도달하면 경로 복원
             // - 현재 칸이 우리가 찾고 있던 도착 좌표라면, 더 이상 탐색할 필요 없이 바로 경로 복원 단계로 넘어간다.
             // f_ReconstructPath는 "출구에 도착했으니까, 이제 지나온 길을 역으로 따라가서 경로 리스트를 만들어 줘" 라는 의미
+            if (BFS_SearchCount_Text != null)
+                {
+                    BFS_SearchCount_Text.text = "BFS : " + nBFSSearchCount.ToString();
+                }
+
+
             if (current == vEndLocation)
             {
-                return f_ReconstructPath(cameFrom, vEndLocation);
+                // 도착 지점에 도달했으므로, 경로 복원 메소드 호출
+                return f_ReconstructPath(cameFrom, current);
             }
 
             // ③ 이웃 탐색 상/하/좌/우 네 방향
@@ -117,7 +133,7 @@ public class BFSPathFinder : MonoBehaviour
                     cameFrom[next] = current; // next의 부모는 current
                 }
             }
-
+            
         }
 
         // ④ 큐가 공백일때까지 도착점을 못 찾은 경우

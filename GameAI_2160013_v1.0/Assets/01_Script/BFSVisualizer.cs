@@ -58,6 +58,7 @@ public class BFSVisualizer : MonoBehaviour
             // 이는 코루틴을 실행해서, 한 프레임에 모든 색을 바꾸는 대신, 여러 프레임에 걸쳐 순차적으로 타일 색을 변경하게 하는 역할을 합니다.
             // 결과적으로, 경로가 “한 칸씩 칠해지는 애니메이션”처럼 보이게 되어 시각적으로 BFS 알고리즘을 쉽게 확인할 수 있도록 합니다.
             StartCoroutine(ShowBFSPath());
+            
         }
     }
 

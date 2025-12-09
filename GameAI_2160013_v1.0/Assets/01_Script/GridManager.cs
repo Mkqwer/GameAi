@@ -8,7 +8,7 @@ using UnityEngine;
 
 public class GridManager : MonoBehaviour
 {
-    [SerializeField] private GameObject gTilePrefab = null; //각 셀을 표현할 Tile 프리팹
+[SerializeField] private GameObject gTilePrefab = null; //각 셀을 표현할 Tile 프리팹
 
 /* 미로만들기 : 그리드 데이터
 0 : 이동 가능(통로)
